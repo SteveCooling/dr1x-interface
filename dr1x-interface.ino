@@ -1,10 +1,10 @@
 const int LED       = LED_BUILTIN;
-const int SQL_PIN   = 6; // pin that is polled to check SQL level.
+const int SQL_PIN   = 10; // pin that is polled to check SQL level.
 
-const int EXTIO_PIN = 0;
-const int EXT1_PIN  = 1;
-const int EXT2_PIN  = 2;
-const int PTT_PIN   = 3;
+const int EXTIO_PIN = 2;
+const int EXT1_PIN  = 3;
+const int EXT2_PIN  = 4;
+const int PTT_PIN   = 5;
 
 const bool EXT1_AUTOAUTO = HIGH;
 const bool EXT2_AUTOAUTO = HIGH;
@@ -25,12 +25,17 @@ const int mode_delay_ms = 150;
 int mode_standby = MODE_AUTOAUTO;
 int mode_ptt     = MODE_FMFM; // Only FMFM makes sense here, but is still configurable
 
-String inputString = "";         // a string to hold incoming data
-boolean stringComplete = false;  // whether the string is complete
+bool debug = false;
+
+String input_string = "";         // a string to hold incoming data
+boolean string_complete = false;  // whether the string is complete
 
 bool ptt = LOW; // set this to HIGH to trigger PTT sequence. Set to LOW to trigger reverse sequence.
-int ptt_sequence = 0; // 0 = standby mode
-unsigned long ptt_started = 0; // used to track ptt sequence progress
+int ptt_sequence = 2; // initialize at 2 to get handle_ptt_sequence() to init to the configured standby mode
+
+unsigned long ptt_sequence_started = 0; // used to track ptt sequence progress
+unsigned long ptt_started = 0; // used to trig automatic keydown
+unsigned long ptt_max_ms = 600000; // automatic keydown after 10 minutes
 
 bool sql = LOW; // used to track squelch level
 
@@ -43,51 +48,58 @@ void setup() {
   pinMode(PTT_PIN,   OUTPUT);
  
   Serial.begin(9600);
-  inputString.reserve(200);
+  input_string.reserve(200);
   //Serial.println("# READY");
 
 }
 
 void loop() {
-  if (Serial.available() > 0) {
-    // get the new byte:
-    char inChar = (char)Serial.read(); 
-    // add it to the inputString:
-    inputString += inChar;
-    // if the incoming character is a newline, set a flag
-    // so the main loop can do something about it:
-    if (inChar == '\n') {
-      stringComplete = true;
-    } 
+  handle_serial_input();
+  if (string_complete) {
+    handle_input_string();
+    string_complete = false;
+    input_string = "";
   }
 
-  // print the string when a newline arrives:
-  if (stringComplete) {
-    Serial.println(inputString); 
-    
-    if(inputString.startsWith("PTT")) {
-      handleCmdPTT(inputString);
-    } else if (inputString.startsWith("MODE")) {
-      handleCmdMODE(inputString);
-    }
-
-    Serial.print("\r");
-    
-    // clear the string:
-    inputString = "";
-    stringComplete = false;
-    //prompt();
-  }
-  
-  handleSQL();
-
-  handlePTTSequence();
+  handle_sql();
+  handle_ptt_sequence();
 
   // Idle a bit...
   delay(10);
 }
 
-void handleSQL() {
+void handle_serial_input() {
+  if (Serial.available() > 0) {
+    // get the new byte:
+    char inChar = (char)Serial.read();
+    
+    // if the incoming character is a newline, set a flag
+    // so the main loop can do something about it:
+    if (inChar == '\n' || inChar == '\r') {
+      // Both Carriage Return and Linefeed characters trig command parsing.
+      // If someone uses both, the second will just be parsed as an empty command and ignored.
+      // This ensures that all "client" configurations work
+      string_complete = true;
+    } else {
+      // add it to the input_string:
+      input_string += inChar;
+    }
+  }
+}
+
+void handle_input_string() {
+  Serial.println(input_string); 
+  
+  if(input_string.startsWith("PTT")) {
+    handle_cmd_ptt(input_string);
+  } else if (input_string.startsWith("MODE")) {
+    handle_cmd_mode(input_string);
+  } else if (input_string.startsWith("DEBUG")) {
+    handle_cmd_debug(input_string);
+  }
+}
+
+void handle_sql() {
   bool sql_read;
   sql_read = digitalRead(SQL_PIN);
   if(sql_read != sql) {
@@ -101,20 +113,28 @@ void handleSQL() {
   }
 }
 
-void handleCmdPTT(String inputString) {
-  if(inputString.endsWith("1\n")) {
-     setPTT(HIGH);
+void handle_cmd_ptt(String input_string) {
+  if(input_string.endsWith("1")) {
+     set_ptt(HIGH);
   } else {
-    setPTT(LOW);
+    set_ptt(LOW);
   }
 }
 
-void handleCmdMODE(String inputString) {
-  if(inputString.endsWith("AUTOAUTO\n")) {
+void handle_cmd_debug(String input_string) {
+  if(input_string.endsWith("1")) {
+    debug = true;
+  } else {
+    debug = false;
+  }
+}
+
+void handle_cmd_mode(String input_string) {
+  if(input_string.endsWith("AUTOAUTO")) {
     mode_standby = MODE_AUTOAUTO;
-  } else if(inputString.endsWith("AUTOFM\n")) {
+  } else if(input_string.endsWith("AUTOFM")) {
     mode_standby = MODE_AUTOFM;
-  } else if(inputString.endsWith("FMFM\n")) {
+  } else if(input_string.endsWith("FMFM")) {
     mode_standby = MODE_FMFM;
   }
   // Reset mode if PTT is low
@@ -126,14 +146,30 @@ void handleCmdMODE(String inputString) {
   }
 }
 
-void setPTT(bool level) {
+void set_ptt(bool level) {
   ptt = level;
-  ptt_started = millis();
+  if(debug) {
+    Serial.print("ptt ");
+    Serial.println(ptt);
+  }
+  ptt_sequence_started = millis();
+  if(ptt == HIGH) {
+    ptt_started = millis();
+  }
 }
 
-void handlePTTSequence() {
-  // This function is run every loop iteration. It's purpose is to see if there's some pin switching that needs to be done.
-  if(millis() >= (ptt_started + mode_delay_ms)) { 
+void handle_ptt_sequence() {
+  // This function is run every loop iteration.
+  // It's purpose is to see if there's some pin switching that needs to be done.
+  
+  // Automatic keydown timer
+  if((ptt == HIGH) && ((ptt_started + ptt_max_ms) < millis())) {
+    if(debug) Serial.println("ptt 0 (auto)");
+    ptt = LOW;
+  }
+  
+  // Sequencing
+  if(millis() >= (ptt_sequence_started + mode_delay_ms)) { 
     if((ptt == HIGH && ptt_sequence < 3) || (ptt == LOW && ptt_sequence > 0)) {
       
       if(ptt == HIGH) { // Going up
@@ -145,20 +181,20 @@ void handlePTTSequence() {
             break;
           case 2:
             // Set Mode pins
-            Serial.print("mode ");
+            if(debug) Serial.print("mode ");
             switch(mode_ptt) {
               case MODE_AUTOAUTO:
-                Serial.println("autoauto");
+                if(debug) Serial.println("autoauto");
                 digitalWrite(EXT1_PIN, EXT1_AUTOAUTO);
                 digitalWrite(EXT2_PIN, EXT2_AUTOAUTO);
                 break;
               case MODE_AUTOFM:
-                Serial.println("autofm");
+                if(debug) Serial.println("autofm");
                 digitalWrite(EXT1_PIN, EXT1_AUTOFM);
                 digitalWrite(EXT2_PIN, EXT2_AUTOFM);
                 break;
               case MODE_FMFM:
-                Serial.println("fmfm");
+                if(debug) Serial.println("fmfm");
                 digitalWrite(EXT1_PIN, EXT1_FMFM);
                 digitalWrite(EXT2_PIN, EXT2_FMFM);
                 break;
@@ -179,20 +215,20 @@ void handlePTTSequence() {
             break;
           case 1:
             // Reset Mode pins
-            Serial.print("mode ");
+            if(debug) Serial.print("mode ");
             switch(mode_standby) {
               case MODE_AUTOAUTO:
-                Serial.println("autoauto");
+                if(debug) Serial.println("autoauto");
                 digitalWrite(EXT1_PIN, EXT1_AUTOAUTO);
                 digitalWrite(EXT2_PIN, EXT2_AUTOAUTO);
                 break;
               case MODE_AUTOFM:
-                Serial.println("autofm");
+                if(debug) Serial.println("autofm");
                 digitalWrite(EXT1_PIN, EXT1_AUTOFM);
                 digitalWrite(EXT2_PIN, EXT2_AUTOFM);
                 break;
               case MODE_FMFM:
-                Serial.println("fmfm");
+                if(debug) Serial.println("fmfm");
                 digitalWrite(EXT1_PIN, EXT1_FMFM);
                 digitalWrite(EXT2_PIN, EXT2_FMFM);
                 break;
@@ -205,9 +241,11 @@ void handlePTTSequence() {
             break;
         }
       }
-      Serial.print("ptt ");
-      Serial.println(ptt_sequence);
-      ptt_started = millis();  
+      if(debug) {
+        Serial.print("ptt_sequence ");
+        Serial.println(ptt_sequence);
+      }
+      ptt_sequence_started = millis();  
     }
   }
 }
