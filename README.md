@@ -15,20 +15,20 @@ Line protocol
 
 ### Commands
 
-- MODE <AUTOAUTO,AUTOFM,AUTOAUTO>
+- MODE (AUTOAUTO,AUTOFM,AUTOAUTO)
   Set standby operating mode of the repeater (while not keyed from this interface)
 
-- PTT <0,1>
+- PTT (0,1)
   Externally control the repeater's transmitter
   Setting the PTT will sequentially set EXT I/O, MODE FM/FM and then PTT.
   Resetting PTT will reverse the sequence.
 
-- DEBUG <0,1>
+- DEBUG (0,1)
   Output debug output on the serial line along with the other signals.
 
 ### Input signals
 
-- SQL <1,0>
+- SQL (1,0)
   The interface sends "SQL 1" if the squelch input pin is pulled low, and "SQL 0" when released.
 
 Compatibility
