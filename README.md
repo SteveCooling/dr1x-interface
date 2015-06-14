@@ -41,5 +41,6 @@ Line protocol
 Compatibility
 -------------
 
-Code is tested on Teensy 3.1 and Arduino Pro Micro (Leonardo), but should work on most anything you can program from the Arduino IDE.
+Code is tested on Teensy 3.1 and Arduino Pro Micro (Leonardo), but should work on anything you can program from the Arduino IDE that appears as a serial port to the connected computer.
 
+This interface can be used to link several Yaesu DR-1X repeaters together, and to provide Echolink connectivity to one or more such repeaters. To do this you need to use my patched version of TheLinkBox from here: https://github.com/SteveCooling/thelinkbox
