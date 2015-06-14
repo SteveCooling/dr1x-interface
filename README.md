@@ -3,12 +3,19 @@ dr1x-interface
 
 Microcontroller interface to control operating modes of the Yaesu DR-1X Repeater.
 
+Author LA1FTA Morten <la1fta@la3m.no>. Copyright (c) 2015. Please see LICENSE file.
+
 Purpose
 -------
 
 Allows remote control of the Yaesu DR-1X Repeater.
 PTT and operating mode can be controlled remotely via a USB virtual serial port.
 The squelch input can be sensed using the same serial line.
+
+The code samples the SQL pin and sends information about state changes to the computer.
+It also sequences outputs for the EXT I/O, MODE, and PTT pins when commanded to.
+
+![Interface test circuit](https://raw.githubusercontent.com/SteveCooling/dr1x-interface/master/testcircuit.jpg)
 
 Line protocol
 -------------
