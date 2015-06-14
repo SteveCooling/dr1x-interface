@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Yaesu DR-1X serial interface : Reliable input signal sensing, PTT keying and mode switching via serial port">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Yaesu DR-1X serial interface</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/SteveCooling/dr1x-interface">View on GitHub</a>
+
+          <h1 id="project_title">Yaesu DR-1X serial interface</h1>
+          <h2 id="project_tagline">Reliable input signal sensing, PTT keying and mode switching via serial port</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/SteveCooling/dr1x-interface/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/SteveCooling/dr1x-interface/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a id="dr1x-interface" class="anchor" href="#dr1x-interface" aria-hidden="true"><span class="octicon octicon-link"></span></a>dr1x-interface</h1>
+
+<p>Microcontroller interface to control operating modes of the Yaesu DR-1X Repeater.</p>
+
+<p>Author LA1FTA Morten <a href="mailto:la1fta@la3m.no">la1fta@la3m.no</a>. Copyright (c) 2015. Please see LICENSE file.</p>
+
+<h2>
+<a id="purpose" class="anchor" href="#purpose" aria-hidden="true"><span class="octicon octicon-link"></span></a>Purpose</h2>
+
+<p>Allows remote control of the Yaesu DR-1X Repeater.
+PTT and operating mode can be controlled remotely via a USB virtual serial port.
+The squelch input can be sensed using the same serial line.</p>
+
+<p>The code samples the SQL pin and sends information about state changes to the computer.
+It also sequences outputs for the EXT I/O, MODE, and PTT pins when commanded to.</p>
+
+<p><img src="https://raw.githubusercontent.com/SteveCooling/dr1x-interface/master/testcircuit.jpg" alt="Interface test circuit"></p>
+
+<h2>
+<a id="line-protocol" class="anchor" href="#line-protocol" aria-hidden="true"><span class="octicon octicon-link"></span></a>Line protocol</h2>
+
+<h3>
+<a id="commands" class="anchor" href="#commands" aria-hidden="true"><span class="octicon octicon-link"></span></a>Commands</h3>
+
+<ul>
+<li><p>MODE (AUTOAUTO,AUTOFM,AUTOAUTO)
+Set standby operating mode of the repeater (while not keyed from this interface)</p></li>
+<li><p>PTT (0,1)
+Externally control the repeater's transmitter
+Setting the PTT will sequentially set EXT I/O, MODE FM/FM and then PTT.
+Resetting PTT will reverse the sequence.</p></li>
+<li><p>DEBUG (0,1)
+Output debug output on the serial line along with the other signals.</p></li>
+</ul>
+
+<h3>
+<a id="input-signals" class="anchor" href="#input-signals" aria-hidden="true"><span class="octicon octicon-link"></span></a>Input signals</h3>
+
+<ul>
+<li>SQL (1,0)
+The interface sends "SQL 1" if the squelch input pin is pulled low, and "SQL 0" when released.</li>
+</ul>
+
+<h2>
+<a id="compatibility" class="anchor" href="#compatibility" aria-hidden="true"><span class="octicon octicon-link"></span></a>Compatibility</h2>
+
+<p>Code is tested on Teensy 3.1 and Arduino Pro Micro (Leonardo), but should work on anything you can program from the Arduino IDE that appears as a serial port to the connected computer.</p>
+
+<p>This interface can be used to link several Yaesu DR-1X repeaters together, and to provide Echolink connectivity to one or more such repeaters. To do this you need to use my patched version of TheLinkBox from here: <a href="https://github.com/SteveCooling/thelinkbox">https://github.com/SteveCooling/thelinkbox</a></p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Yaesu DR-1X serial interface maintained by <a href="https://github.com/SteveCooling">SteveCooling</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
