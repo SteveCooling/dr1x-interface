@@ -12,14 +12,14 @@ const bool EXT2_AUTOAUTO = HIGH;
 const bool EXT1_AUTOFM = LOW;
 const bool EXT2_AUTOFM = LOW;
 
-const bool EXT1_FMFM = HIGH;
-const bool EXT2_FMFM = LOW;
+const bool EXT1_FMFM = LOW;
+const bool EXT2_FMFM = HIGH;
 
 const int MODE_AUTOAUTO = 0;
 const int MODE_AUTOFM = 1;
 const int MODE_FMFM = 2;
 
-const int mode_delay_ms = 150;
+const int mode_delay_ms = 75;
 
 // Mode config
 int mode_standby = MODE_AUTOAUTO;
