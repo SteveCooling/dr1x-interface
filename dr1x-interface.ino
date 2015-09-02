@@ -2,8 +2,8 @@ const int LED       = LED_BUILTIN;
 const int SQL_PIN   = 10; // pin that is polled to check SQL level.
 
 const int EXTIO_PIN = 2;
-const int EXT1_PIN  = 3;
-const int EXT2_PIN  = 4;
+const int EXT1_PIN  = 4;
+const int EXT2_PIN  = 3;
 const int PTT_PIN   = 5;
 
 const bool EXT1_AUTOAUTO = HIGH;
@@ -19,7 +19,7 @@ const int MODE_AUTOAUTO = 0;
 const int MODE_AUTOFM = 1;
 const int MODE_FMFM = 2;
 
-const int mode_delay_ms = 75;
+const int mode_delay_ms = 80;
 
 // Mode config
 int mode_standby = MODE_AUTOAUTO;
@@ -106,6 +106,7 @@ void handle_sql() {
     // Squelch level changed
     sql = sql_read;
     if(sql_read == HIGH) { // test for HIGH assumes Reverse logic on this pin
+      delay(900); // hack to avoid hangs in full auto
       Serial.println("SQL 0");
     } else {
       Serial.println("SQL 1");
