@@ -106,7 +106,6 @@ void handle_sql() {
     // Squelch level changed
     sql = sql_read;
     if(sql_read == HIGH) { // test for HIGH assumes Reverse logic on this pin
-      delay(900); // hack to avoid hangs in full auto
       Serial.println("SQL 0");
     } else {
       Serial.println("SQL 1");
